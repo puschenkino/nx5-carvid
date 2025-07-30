@@ -11,7 +11,7 @@ if [ ! -d u-boot ]; then
 fi
 
 cd u-boot
-cp /configs/devicetree/rk3588-radxa-nx5-carvid.dts arch/arm/dts/rk3588-radxa-nx5-carvid.dts
+cp /configs/u-boot/rk3588-radxa-nx5-carvid.dts arch/arm/dts/rk3588-radxa-nx5-carvid.dts
 cp /configs/u-boot/radxa-nx5-carvid-rk3588s_defconfig configs/radxa-nx5-carvid-rk3588s_defconfig
 make distclean
 make ${DEFCONFIG}
