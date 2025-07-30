@@ -1,0 +1,9 @@
+services:
+  uboot-builder:
+    build: .
+    volumes:
+      - ./output:/output
+      - ./configs:/configs
+      - ./build.sh:/build.sh
+    working_dir: /src
+    command: ["bash", "/build.sh"]
