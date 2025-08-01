@@ -1,9 +1,10 @@
 services:
-  uboot-builder:
-    build: .
+  nx5-carmod:
+    build: Docker/nx5-carmod
+    image: nx5-carmod:latest
+    privileged: true
     volumes:
-      - ./output:/output
-      - ./configs:/configs
-      - ./build.sh:/build.sh
-    working_dir: /src
+      - ./output:/opt/output
+      - ./configs:/opt/configs
+      #- ./test:/opt/build/
     command: ["bash", "/build.sh"]
