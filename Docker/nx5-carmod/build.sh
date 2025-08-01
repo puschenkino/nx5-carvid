@@ -21,17 +21,22 @@ fi
 echo "[✨] Cloning and building U-Boot..."
 if [ ! -d "/opt/output/uboot" ] 
 then
-    cd /opt/build
-    git clone -v -b next-dev-v2024.10 $UBOOT_REPO uboot
-    cp /opt/configs/u-boot/radxa-nx5-carmod-rk3588s_defconfig /opt/build/uboot/configs/
+
+    if [ ! -d "/opt/build/uboot" ] 
+    then
+        git clone -v -b next-dev-v2024.10 $UBOOT_REPO uboot
+    fi  
+
+    cp /opt/configs/u-boot/radxa-nx5-carmod-rk3588s_defconfig /opt/build/uboot/configs/radxa-nx5-carmod-rk3588s_defconfig
     cp /opt/configs/u-boot/rk3588-radxa-nx5-carmod.dts /opt/build/uboot/arch/arm/dts/
     
-    mkdir -p /opt/output/uboot
     export CROSS_COMPILE=aarch64-linux-gnu-
     export KCFLAGS="-Wno-error"
+    
+    cd /opt/build/uboot/
+    mkdir -p /opt/output/uboot
     make radxa-nx5-carmod-rk3588s_defconfig
     make -j$(nproc) -o /opt/output/uboot
-
     tools/mkimage -n rk3588 -T rksd -d /opt/build/uboot/spl/u-boot-spl.bin /opt/output/uboot/idbloader.img
     cp /opt/build/rkbin/bin/rk35/bl31.elf bl31.elf 2>/dev/null || true
     /opt/build/uboot/make.sh CROSS_COMPILE=aarch64-linux-gnu- itb
@@ -46,7 +51,10 @@ echo "[✨] Cloning and building Kernel..."
 if [ ! -d "/opt/output/kernel" ] 
 then
     cd /opt/build
-    git clone -v -b $KERNEL_BRANCH $KERNEL_REPO kernel
+    if [ ! -d "/opt/build/kernel" ] 
+    then
+        git clone -v -b $KERNEL_BRANCH $KERNEL_REPO kernel
+    fi  
     
     cd /opt/build/kernel
     cp /opt/configs/kernel/rk3588_nx5-carmod_defconfig /opt/build/kernel/arch/arm64/configs
@@ -89,8 +97,7 @@ else
     echo "Skipping RootFS creation, using pre-built version from /opt/build/rootfs"
 fi  
 
-# # 5. Optional: Image bauen (raw)
-# Variablen
+
 ROOTFS_DIR="/opt/build/rootfs"
 IMG_NAME="/opt/output/radxa_debian.img"
 UBOOT_DIR="/opt/output/uboot"
