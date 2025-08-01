@@ -1,2 +1,4 @@
 output/u-boot.img
 output/*.dtb
+test
+output
