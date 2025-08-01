@@ -71,7 +71,7 @@ then
     cp /opt/build/kernel/arch/arm64/boot/Image /opt/output/kernel/Image
     cp /opt/build/kernel/arch/arm64/boot/dts/rockchip/rk3588-radxa-nx5-carmod.dtb /opt/output/kernel/rk3588-radxa-nx5-carmod.dtb
     cd ..
-elsew
+else
     echo "Skipping Kernel build, using pre-built version from /opt/output/kernel"
 fi
 
