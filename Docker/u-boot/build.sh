@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Parameter
+echo "📦 Baue U-Boot..."
 UBOOT_REPO="https://github.com/radxa/u-boot.git"
 UBOOT_BRANCH="next-dev-v2024.10"
 DEFCONFIG="radxa-nx5-carvid-rk3588s_defconfig"
@@ -16,7 +16,4 @@ cp /configs/u-boot/radxa-nx5-carvid-rk3588s_defconfig configs/radxa-nx5-carvid-r
 make distclean
 make ${DEFCONFIG}
 make CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc)
-
-
 cp u-boot.img /output/
-#cp u-boot.img u-boot.itb /output/
