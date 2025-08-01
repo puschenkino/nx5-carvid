@@ -20,7 +20,7 @@ fi
 # # 1. U-Boot       
 echo "[✨] Cloning and building U-Boot..."
 if [ ! -d "/opt/output/uboot" ] 
-#then
+then
     cd /opt/build
     git clone -v -b next-dev-v2024.10 $UBOOT_REPO uboot
     cp /opt/configs/u-boot/radxa-nx5-carmod-rk3588s_defconfig /opt/build/uboot/configs/
@@ -31,7 +31,7 @@ if [ ! -d "/opt/output/uboot" ]
     export KCFLAGS="-Wno-error"
     make radxa-nx5-carmod-rk3588s_defconfig
     make -j$(nproc) -o /opt/output/uboot
-    
+
     tools/mkimage -n rk3588 -T rksd -d /opt/build/uboot/spl/u-boot-spl.bin /opt/output/uboot/idbloader.img
     cp /opt/build/rkbin/bin/rk35/bl31.elf bl31.elf 2>/dev/null || true
     /opt/build/uboot/make.sh CROSS_COMPILE=aarch64-linux-gnu- itb
