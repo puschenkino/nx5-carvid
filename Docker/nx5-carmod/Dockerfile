@@ -12,8 +12,12 @@ RUN apt update && apt install -y \
     sudo fakeroot ca-certificates \
     fdisk kmod
 
-RUN apt install -y \
+RUN apt-get install -y \
   gcc-aarch64-linux-gnu g++-aarch64-linux-gnu kpartx
+
+RUN apt-get install -y \
+  python-is-python3 python3-pyelftools
+
 
 WORKDIR /opt/build
 COPY build.sh /opt

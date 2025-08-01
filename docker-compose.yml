@@ -6,5 +6,5 @@ services:
     volumes:
       - ./output:/opt/output
       - ./configs:/opt/configs
-      #- ./test:/opt/build/
+      - ./test:/opt/build/
     command: ["bash", "/build.sh"]

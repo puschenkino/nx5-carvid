@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-
+ln -s /usr/bin/python3 /usr/local/bin/python2
 UBOOT_REPO="https://github.com/radxa/u-boot.git"
 #KERNEL_REPO="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git"
 #KERNEL_BRANCH="v6.16"
@@ -10,6 +10,9 @@ KERNEL_BRANCH="linux-6.1-stan-rkr5.1"
 ROOTFS_DIR="/opt/build/rootfs"
 IMG_NAME="/opt/output/radxa_debian.img"
 
+
+#1 u-boot
+
 if [ ! -d "/opt/build/rkbin" ] 
 then
     echo "[✨] getting rkbin tooling ..."
@@ -17,34 +20,51 @@ then
     git clone -v https://github.com/radxa/rkbin.git rkbin
 fi
 
-# # 1. U-Boot       
-echo "[✨] Cloning and building U-Boot..."
+if [ ! -d "/opt/build/u-boot" ] 
+then
+    echo "[✨] Cloning radxa u-boot ..."
+    cd /opt/build
+    git clone -v -b next-dev-v2024.10 $UBOOT_REPO u-boot
+fi  
+
+if [ ! -d "/opt/build/build" ] 
+then
+    echo "[✨] Cloning radxa build helper ..."
+    cd /opt/build
+    git clone -b debian https://github.com/radxa/build.git build
+fi  
+
+
 if [ ! -d "/opt/output/uboot" ] 
 then
-
-    if [ ! -d "/opt/build/uboot" ] 
-    then
-        git clone -v -b next-dev-v2024.10 $UBOOT_REPO uboot
-    fi  
-
-    cp /opt/configs/u-boot/radxa-nx5-carmod-rk3588s_defconfig /opt/build/uboot/configs/radxa-nx5-carmod-rk3588s_defconfig
-    cp /opt/configs/u-boot/rk3588-radxa-nx5-carmod.dts /opt/build/uboot/arch/arm/dts/
-    
+    echo "[✨] prepare build env u-boot"
+    export ARCH=arm
     export CROSS_COMPILE=aarch64-linux-gnu-
-    export KCFLAGS="-Wno-error"
-    
-    cd /opt/build/uboot/
-    mkdir -p /opt/output/uboot
-    make radxa-nx5-carmod-rk3588s_defconfig
-    make -j$(nproc) -o /opt/output/uboot
-    tools/mkimage -n rk3588 -T rksd -d /opt/build/uboot/spl/u-boot-spl.bin /opt/output/uboot/idbloader.img
-    cp /opt/build/rkbin/bin/rk35/bl31.elf bl31.elf 2>/dev/null || true
-    /opt/build/uboot/make.sh CROSS_COMPILE=aarch64-linux-gnu- itb
-    cp /opt/build/uboot/u-boot.itb /opt/output/uboot/u-boot.itb
 
+    mkdir -p /opt/output/uboot
+    cp /opt/configs/u-boot/radxa-nx5-carmod-rk3588s_defconfig /opt/build/u-boot/configs/radxa-nx5-carmod-rk3588s_defconfig
+    cp /opt/configs/u-boot/rk3588-radxa-nx5-carmod.dts /opt/build/u-boot/arch/arm/dts/
+    cp /opt/configs/u-boot/decode_bl31.py /opt/build/u-boot/arch/arm/mach-rockchip/
+
+    cd /opt/build/u-boot
+    
+    echo "[🛠️] configuring make radxa-nx5-carmod-rk3588s_defconfig"
+    make radxa-nx5-carmod-rk3588s_defconfig
+
+    echo "[🛠️] Buildung u-boot.itb"
+    make spl/u-boot-spl.bin u-boot.dtb u-boot.itb
+    cp u-boot.itb /opt/output/uboot/
+
+    echo "[🛠️] Buildung idbloader.img"
+    ./tools/mkimage -n rk3588 -T rksd -d ../rkbin/bin/rk35/rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.19.bin:spl/u-boot-spl.bin idbloader.img
+    cp idbloader.img /opt/output/uboot/
+
+    echo "[🛠️] Nice to have ... rk3588_spl_loader_v1.19.113.bin"
+    cp ../rkbin/bin/rk35/rk3588_spl_loader_v1.19.113.bin /opt/output/uboot/
 else
-   echo "Skipping U-Boot build, using pre-built version from /opt/output/uboot"
-fi
+    echo "Skipping idbloader.img build, using pre-built version from /opt/output/uboot/idbloader.img"
+fi  
+
 
 # 2. Kernel
 echo "[✨] Cloning and building Kernel..."
@@ -69,6 +89,9 @@ then
 
     mkdir /opt/output/kernel
     cp /opt/build/kernel/arch/arm64/boot/Image /opt/output/kernel/Image
+    cp /opt/build/kernel/arch/arm64/configs/rk3588_nx5-carmod_defconfig /opt/output/kernel/rk3588_nx5-carmod_defconfig
+
+    cp /opt/build/kernel/arch/arm64/configs/rk3588_nx5-carmod_defconfig /opt/output/kernel/rk3588_nx5-carmod_defconfig
     cp /opt/build/kernel/arch/arm64/boot/dts/rockchip/rk3588-radxa-nx5-carmod.dtb /opt/output/kernel/rk3588-radxa-nx5-carmod.dtb
     cd ..
 else
@@ -84,18 +107,27 @@ mkdir -p ${ROOTFS_DIR}
 sudo debootstrap --arch=arm64 --foreign bookworm ${ROOTFS_DIR} http://deb.debian.org/debian
 sudo cp /usr/bin/qemu-aarch64-static ${ROOTFS_DIR}/usr/bin/
 sudo chroot ${ROOTFS_DIR} /debootstrap/debootstrap --second-stage
-
-# 4. SSH & Grundkonfiguration
-echo "[✨] Configuring base system..."
-sudo chroot ${ROOTFS_DIR} /bin/bash -c "
-apt update && \
-apt install -y openssh-server ifupdown sudo && \
-systemctl enable ssh && \
-echo 'root:radxa' | chpasswd
-"
 else
     echo "Skipping RootFS creation, using pre-built version from /opt/build/rootfs"
 fi  
+
+
+# 4. SSH & Grundkonfiguration
+echo "[✨] Configuring base system..."
+sudo cp /opt/output/kernel/rk3588_nx5-carmod_defconfig ${ROOTFS_DIR}/boot/config-6.1.0
+
+sudo chroot ${ROOTFS_DIR} /bin/bash -c "
+apt update && \
+apt install -y openssh-server ifupdown sudo initramfs-tools && \
+systemctl enable ssh && \
+echo 'root:radxa' | chpasswd
+"
+echo "[✨] Building initramfs..."
+sudo chroot ${ROOTFS_DIR} /bin/bash -c "
+update-initramfs -c -v -b /boot -k 6.1.0 && \
+ls /boot \
+"
+
 
 
 ROOTFS_DIR="/opt/build/rootfs"
@@ -103,7 +135,6 @@ IMG_NAME="/opt/output/radxa_debian.img"
 UBOOT_DIR="/opt/output/uboot"
 KERNEL_DIR="/opt/output/kernel"
 
-# Sicherstellen, dass Output-Verzeichnis existiert
 mkdir -p /opt/output
 
 echo "[✨] Creating image file..."
@@ -128,7 +159,7 @@ ROOT_DEV="/dev/mapper/$(basename $LOOPDEV)p2"
 # Warten, bis sie erscheinen
 for i in {1..10}; do
     if [[ -b $BOOT_DEV && -b $ROOT_DEV ]]; then break; fi
-    echo "⏳ Waiting for $BOOT_DEV and $ROOT_DEV..."
+    echo "⏳ Waiting for $BOOT_DEV and $ROOT_DEV..."s
     sleep 0.5
 done
 
@@ -149,9 +180,12 @@ sudo mount $BOOT_DEV mnt/boot
 sudo mount $ROOT_DEV mnt/root
 
 # Dateien kopieren
-echo "[✨] Copying rootfs and kernel..."
+echo "[✨] Copying rootfs, kernel and extlinux ..."
 sudo rsync -a ${ROOTFS_DIR}/ mnt/root/
 sudo cp ${KERNEL_DIR}/Image mnt/boot/
+
+mkdir -p mnt/boot/extlinux/
+sudo cp /opt/configs/u-boot/extlinux.conf mnt/boot/extlinux/extlinux.conf
 sudo cp ${KERNEL_DIR}/rk3588-radxa-nx5-carmod.dtb mnt/boot/
 
 # U-Boot installieren
