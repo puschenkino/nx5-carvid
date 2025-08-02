@@ -9,7 +9,7 @@ KERNEL_REPO="https://github.com/radxa/kernel"
 KERNEL_BRANCH="linux-6.1-stan-rkr5.1"
 ROOTFS_DIR="/opt/build/rootfs"
 IMG_NAME="/opt/output/radxa_debian.img"
-
+KERNEL_VERSION="6.1.0-radxa-nx5-carmod"
 
 #1 u-boot
 
@@ -85,9 +85,9 @@ then
     export CROSS_COMPILE=aarch64-linux-gnu-
     make ARCH=arm64 rk3588_nx5-carmod_defconfig
     make ARCH=arm64 -j$(nproc) Image dtbs modules
-    make ARCH=arm64 INSTALL_MOD_PATH=../${ROOTFS_DIR} modules_install
+    mkdir -p /opt/output/kernel/modules
+    make ARCH=arm64 INSTALL_MOD_PATH=/opt/output/kernel/modules modules_install
 
-    mkdir /opt/output/kernel
     cp /opt/build/kernel/arch/arm64/boot/Image /opt/output/kernel/Image
     cp /opt/build/kernel/arch/arm64/configs/rk3588_nx5-carmod_defconfig /opt/output/kernel/rk3588_nx5-carmod_defconfig
 
@@ -104,9 +104,9 @@ echo "[✨] Creating Debian 12 (bookworm) rootfs..."
 if [ ! -d "/opt/build/rootfs" ] 
 then
 mkdir -p ${ROOTFS_DIR}
-sudo debootstrap --arch=arm64 --foreign bookworm ${ROOTFS_DIR} http://deb.debian.org/debian
-sudo cp /usr/bin/qemu-aarch64-static ${ROOTFS_DIR}/usr/bin/
-sudo chroot ${ROOTFS_DIR} /debootstrap/debootstrap --second-stage
+debootstrap --arch=arm64 --foreign bookworm ${ROOTFS_DIR} http://deb.debian.org/debian
+cp /usr/bin/qemu-aarch64-static ${ROOTFS_DIR}/usr/bin/
+chroot ${ROOTFS_DIR} /debootstrap/debootstrap --second-stage
 else
     echo "Skipping RootFS creation, using pre-built version from /opt/build/rootfs"
 fi  
@@ -114,22 +114,21 @@ fi
 
 # 4. SSH & Grundkonfiguration
 echo "[✨] Configuring base system..."
-sudo cp /opt/output/kernel/rk3588_nx5-carmod_defconfig ${ROOTFS_DIR}/boot/config-6.1.0
+cp /opt/output/kernel/rk3588_nx5-carmod_defconfig ${ROOTFS_DIR}/boot/config-6.1.0-radxa-nx5-carmod
 
-sudo chroot ${ROOTFS_DIR} /bin/bash -c "
+mkdir -p ${ROOTFS_DIR}/lib/modules/
+cp -a /opt/output/kernel/modules/* ${ROOTFS_DIR}/lib/modules/6.1.0-radxa-nx5-carmod/
+
+chroot ${ROOTFS_DIR} /bin/bash -c "
 apt update && \
-apt install -y openssh-server ifupdown sudo initramfs-tools && \
+apt install -y openssh-server ifupdown initramfs-tools systemd-sysv login sudo udev netbase ifupdown && \
 systemctl enable ssh && \
+systemctl enable serial-getty@ttyFIQ0.service && \
 echo 'root:radxa' | chpasswd
 "
 
-# echo "[✨] Building initramfs..."
-# sudo chroot ${ROOTFS_DIR} /bin/bash -c "
-# update-initramfs -c -v -b /boot -k 6.1.0 && \
-# ls /boot \
-# "
-
-
+echo "[✨] Building initramfs..."
+chroot ${ROOTFS_DIR} /bin/bash -c "update-initramfs -c -k 6.1.0-radxa-nx5-carmod"
 
 ROOTFS_DIR="/opt/build/rootfs"
 IMG_NAME="/opt/output/radxa_debian.img"
@@ -140,7 +139,7 @@ mkdir -p /opt/output
 
 echo "[✨] Creating image file..."
 rm -f ${IMG_NAME}
-dd if=/dev/zero of=${IMG_NAME} bs=1M count=1024
+dd if=/dev/zero of=${IMG_NAME} bs=1M count=2048
 
 echo "[✨] Creating partitions ..."
 parted -s ${IMG_NAME} mklabel gpt
@@ -148,11 +147,11 @@ parted -s ${IMG_NAME} mkpart primary fat32 1MiB 128MiB
 parted -s ${IMG_NAME} mkpart primary ext4 128MiB 100%
 
 # Loop-Device einrichten
-LOOPDEV=$(sudo losetup --find --show ${IMG_NAME})
+LOOPDEV=$( losetup --find --show ${IMG_NAME})
 echo "[🔁] Using loop device: ${LOOPDEV}"
 
 # Partitionen mit kpartx erzeugen
-sudo kpartx -av $LOOPDEV
+ kpartx -av $LOOPDEV
 
 BOOT_DEV="/dev/mapper/$(basename $LOOPDEV)p1"
 ROOT_DEV="/dev/mapper/$(basename $LOOPDEV)p2"
@@ -166,39 +165,45 @@ done
 
 if [[ ! -b $BOOT_DEV || ! -b $ROOT_DEV ]]; then
     echo "❌ Partition devices not found"
-    sudo kpartx -dv $LOOPDEV
-    sudo losetup -d $LOOPDEV
+     kpartx -dv $LOOPDEV
+     losetup -d $LOOPDEV
     exit 1
 fi
 
 # Formatieren
-sudo mkfs.vfat $BOOT_DEV
-sudo mkfs.ext4 $ROOT_DEV
+ mkfs.vfat $BOOT_DEV
+ mkfs.ext4 $ROOT_DEV
 
 # Mounten
 mkdir -p mnt/boot mnt/root
-sudo mount $BOOT_DEV mnt/boot
-sudo mount $ROOT_DEV mnt/root
+ mount $BOOT_DEV mnt/boot
+ mount $ROOT_DEV mnt/root
 
 # Dateien kopieren
-echo "[✨] Copying rootfs, kernel and extlinux ..."
-sudo rsync -a ${ROOTFS_DIR}/ mnt/root/
-sudo cp /opt/build/rootfs/boot/initrd.img-6.1.0 mnt/boot/initrd.img-6.1.0
-sudo cp ${KERNEL_DIR}/Image mnt/boot/
+echo "[✨] Copying rootfs, kernel ..."
+rsync -a ${ROOTFS_DIR}/ mnt/root/
+ 
+cp /opt/configs/kernel/initrd.img-6.1.84-7-rk2410 mnt/boot/initrd.img-6.1.84-7-rk2410
+cp /opt/configs/kernel/vmlinuz-6.1.84-7-rk2410 mnt/boot/vmlinuz-6.1.84-7-rk2410
 
+cp /opt/build/rootfs/boot/config-6.1.0-radxa-nx5-carmod mnt/boot/config-6.1.0-radxa-nx5-carmod
+cp /opt/build/rootfs/boot/initrd.img-6.1.0-radxa-nx5-carmod mnt/boot/initrd.img-6.1.0-radxa-nx5-carmod
+cp ${KERNEL_DIR}/Image mnt/boot/Image-6.1.0-radxa-nx5-carmod
+
+echo "[✨] Copying extlinux.conf ..."
 mkdir -p mnt/boot/extlinux/
-sudo cp /opt/configs/u-boot/extlinux.conf mnt/boot/extlinux/extlinux.conf
-sudo cp ${KERNEL_DIR}/rk3588-radxa-nx5-carmod.dtb mnt/boot/
+ cp /opt/configs/u-boot/extlinux.conf mnt/boot/extlinux/extlinux.conf
+ cp ${KERNEL_DIR}/rk3588-radxa-nx5-carmod.dtb mnt/boot/
 
 # U-Boot installieren
 echo "[✨] Installing U-Boot..."
-sudo dd if=${UBOOT_DIR}/idbloader.img of=$LOOPDEV seek=64 conv=notrunc
-sudo dd if=${UBOOT_DIR}/u-boot.itb of=$LOOPDEV seek=16384 conv=notrunc
+ dd if=${UBOOT_DIR}/idbloader.img of=$LOOPDEV seek=64 conv=notrunc
+ dd if=${UBOOT_DIR}/u-boot.itb of=$LOOPDEV seek=16384 conv=notrunc
 
 # Aufräumen
-sudo umount mnt/boot
-sudo umount mnt/root
-sudo kpartx -dv $LOOPDEV
-sudo losetup -d $LOOPDEV
+ umount mnt/boot
+ umount mnt/root
+ kpartx -dv $LOOPDEV
+ losetup -d $LOOPDEV
 
 echo "[✓] Build complete. Image: ${IMG_NAME}"
