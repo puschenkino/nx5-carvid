@@ -122,11 +122,12 @@ apt install -y openssh-server ifupdown sudo initramfs-tools && \
 systemctl enable ssh && \
 echo 'root:radxa' | chpasswd
 "
-echo "[✨] Building initramfs..."
-sudo chroot ${ROOTFS_DIR} /bin/bash -c "
-update-initramfs -c -v -b /boot -k 6.1.0 && \
-ls /boot \
-"
+
+# echo "[✨] Building initramfs..."
+# sudo chroot ${ROOTFS_DIR} /bin/bash -c "
+# update-initramfs -c -v -b /boot -k 6.1.0 && \
+# ls /boot \
+# "
 
 
 
@@ -139,7 +140,7 @@ mkdir -p /opt/output
 
 echo "[✨] Creating image file..."
 rm -f ${IMG_NAME}
-dd if=/dev/zero of=${IMG_NAME} bs=1M count=4096
+dd if=/dev/zero of=${IMG_NAME} bs=1M count=1024
 
 echo "[✨] Creating partitions ..."
 parted -s ${IMG_NAME} mklabel gpt
@@ -182,6 +183,7 @@ sudo mount $ROOT_DEV mnt/root
 # Dateien kopieren
 echo "[✨] Copying rootfs, kernel and extlinux ..."
 sudo rsync -a ${ROOTFS_DIR}/ mnt/root/
+sudo cp /opt/build/rootfs/boot/initrd.img-6.1.0 mnt/boot/initrd.img-6.1.0
 sudo cp ${KERNEL_DIR}/Image mnt/boot/
 
 mkdir -p mnt/boot/extlinux/
