@@ -7,7 +7,6 @@ KERNEL_REPO="https://github.com/radxa/kernel"
 KERNEL_BRANCH="linux-6.1-stan-rkr5.1"
 ROOTFS_DIR="/opt/build/rootfs"
 IMG_NAME="/opt/output/radxa_debian.img"
-KERNEL_VERSION="6.1.0-radxa-nx5-carmod"
 
 ROOTFS_DIR="/opt/build/rootfs"
 IMG_NAME="/opt/output/radxa_debian.img"
@@ -100,11 +99,9 @@ else
     echo "Skipping Kernel build, using pre-built version from /opt/output/kernel"
 fi
 
-
 cd /opt/build/kernel
 KERNEL_VERSION=$(make -s kernelrelease) 
 echo "[✨] Build kernelrelease: ${KERNEL_VERSION}"
-
 
 # # 3. RootFS
 echo "[✨] Creating Debian 12 (bookworm) rootfs..."
@@ -117,7 +114,6 @@ chroot ${ROOTFS_DIR} /debootstrap/debootstrap --second-stage
 else
     echo "Skipping RootFS creation, using pre-built version from /opt/build/rootfs"
 fi  
-
 
 # 4. SSH & Grundkonfiguration
 echo "[✨] Configuring base system..."
