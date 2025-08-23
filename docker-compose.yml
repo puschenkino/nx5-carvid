@@ -7,4 +7,5 @@ services:
       - ./output:/opt/output
       - ./configs:/opt/configs
       - ./test:/opt/build/
+      - ./build.sh:/opt/build.sh
     command: ["bash", "/build.sh"]
