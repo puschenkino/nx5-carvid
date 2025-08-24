@@ -13,14 +13,7 @@ RUN apt update && apt install -y \
     fdisk kmod
 
 RUN apt-get install -y \
-  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu kpartx
-
-RUN apt-get install -y \
-  python-is-python3 python3-pyelftools
-
-RUN adduser --disabled-password --gecos '' docker
-RUN adduser docker sudo
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu kpartx python-is-python3 python3-pyelftools file bsdextrautils
 
 WORKDIR /opt/build
 

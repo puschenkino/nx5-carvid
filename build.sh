@@ -2,7 +2,8 @@
 set -e
 
 UBOOT_REPO="https://github.com/radxa/u-boot.git"
-UBOOT_BRANCH="next-dev-v2024.03"
+#UBOOT_BRANCH="next-dev-v2024.10"
+UBOOT_BRANCH="cubie-aiot-v1.4.6"
 KERNEL_REPO="https://github.com/radxa/kernel"
 KERNEL_BRANCH="linux-6.1-stan-rkr5.1"
 ROOTFS_DIR="/opt/build/rootfs"
@@ -24,7 +25,7 @@ fi
 
 if [ ! -d "/opt/build/u-boot" ] 
 then
-    echo "[✨] Cloning radxa u-boot ..."
+    echo "[✨] Cloning radxa u-boot branch: $UBOOT_BRANCH ..."
     cd /opt/build
     git clone --depth 1 -b $UBOOT_BRANCH $UBOOT_REPO u-boot
 fi  
@@ -39,7 +40,7 @@ fi
 if [ ! -d "/opt/output/uboot" ] 
 then
     echo "[✨] prepare build env u-boot"
-    export ARCH=arm
+    export ARCH=arm64
     export CROSS_COMPILE=aarch64-linux-gnu-
 
     mkdir -p /opt/output/uboot
@@ -124,6 +125,7 @@ mkdir -p ${ROOTFS_DIR}/lib/modules/${KERNEL_VERSION}
 cp -a /opt/output/kernel/modules/lib/modules/${KERNEL_VERSION}/* ${ROOTFS_DIR}/lib/modules/${KERNEL_VERSION}/
 chroot ${ROOTFS_DIR} depmod -a ${KERNEL_VERSION}
 
+
 chroot ${ROOTFS_DIR} /bin/bash -c "
 apt update && \
 apt install -y openssh-server ifupdown initramfs-tools systemd-sysv login sudo udev netbase ifupdown curl systemd-resolved systemd-timesyncd && \
@@ -139,18 +141,14 @@ chroot ${ROOTFS_DIR} /bin/bash -c "
 rm /etc/resolv.conf && ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 "
 
-
 echo "[Match]
 Name=end1*
 
 [Network]
 DHCP=yes" > ${ROOTFS_DIR}/etc/systemd/network/20-dhcp.network
 
-
-
 echo "[✨] Building initramfs..."
 chroot ${ROOTFS_DIR} /bin/bash -c "update-initramfs -c -k ${KERNEL_VERSION}"
-
 
 mkdir -p /opt/output
 echo "[✨] Creating image file..."
@@ -203,6 +201,11 @@ rsync -a ${ROOTFS_DIR}/ mnt/root/
  
 cp /opt/build/rootfs/boot/* mnt/boot/
 cp ${KERNEL_DIR}/Image mnt/boot/Image-${KERNEL_VERSION}
+
+echo "[❇️] Kernel File info:"
+file mnt/boot/Image-${KERNEL_VERSION}
+
+hexdump -C -n 64 mnt/boot/Image-${KERNEL_VERSION}
 
 ls -lah mnt/boot/
 
