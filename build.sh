@@ -2,8 +2,7 @@
 set -e
 
 UBOOT_REPO="https://github.com/radxa/u-boot.git"
-#UBOOT_BRANCH="next-dev-v2024.10"
-UBOOT_BRANCH="cubie-aiot-v1.4.6"
+UBOOT_BRANCH="next-dev-v2024.10"
 KERNEL_REPO="https://github.com/radxa/kernel"
 KERNEL_BRANCH="linux-6.1-stan-rkr5.1"
 ROOTFS_DIR="/opt/build/rootfs"
