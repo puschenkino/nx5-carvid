@@ -42,6 +42,9 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		startup-delay-us = <5000>;
+		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
 		gpio = <&gpio3 RK_PD5 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pcie_m_en_pctrl>;
@@ -55,8 +58,23 @@
 		startup-delay-us = <10000>;
 		gpio = <&gpio3 RK_PD4 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pcie_e_en_pctrl>;
+	};
+	vcc3v3_pcie_b: vcc3v3-pcie-b {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc3v3_pcie_b";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		startup-delay-us = <10000>;
+		gpio = <&gpio3 RK_PD2 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pcie_b_en_pctrl>;
 	};
 
 	wifi_en: wifi-en {
@@ -65,7 +83,7 @@
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
 		startup-delay-us = <60000>;
-		gpio = <&gpio3 RK_PD2 GPIO_ACTIVE_LOW>;
+		gpio = <&gpio3 RK_PC0 GPIO_ACTIVE_LOW>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&wifi_en_pctrl>;
 	};
@@ -76,7 +94,7 @@
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
 		startup-delay-us = <10000>;
-		gpio = <&gpio3 RK_PD2 GPIO_ACTIVE_HIGH>;
+		gpio = <&gpio3 RK_PB7 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		pinctrl-names = "default";
 		pinctrl-0 = <&wifi_rst_pctrl>;
@@ -146,6 +164,306 @@
 
 &combphy0_ps {
 	status = "okay";
+};
+
+
+&i2c1 {
+  status = "okay";
+  pinctrl-0 = <&i2c1m4_xfer>;
+
+  vin-3v3@40 {
+    compatible = "ti,ina219";
+    reg = <0x40>;
+    shunt-resistor = <5000>;
+    label = "3V3 / Pre regulator";
+  };
+
+  3v3-eth@41 {
+    compatible = "ti,ina219";
+    reg = <0x41>;
+    shunt-resistor = <5000>;
+    label = "3V3 / Ethernet";
+  };
+
+  3v3-sys@42 {
+    compatible = "ti,ina219";
+    reg = <0x42>;
+    shunt-resistor = <5000>;
+    label = "3V3 / System";
+  };
+
+  3v3-m2@43 {
+    compatible = "ti,ina219";
+    reg = <0x43>;
+    shunt-resistor = <5000>;
+    label = "3V3 / M.2";
+  };
+
+  vin-4v0@44 {
+    compatible = "ti,ina219";
+    reg = <0x44>;
+    shunt-resistor = <5000>;
+    label = "4V0 / Pre regulator";
+  };
+
+  4v0-nx5@45 {
+    compatible = "ti,ina219";
+    reg = <0x45>;
+    shunt-resistor = <5000>;
+    label = "4V0 / NX5";
+  };
+
+  vin-5v0@46 {
+    compatible = "ti,ina219";
+    reg = <0x46>;
+    shunt-resistor = <5000>;
+    label = "5V0 / Pre regulator";
+  };
+
+  5v0-usb@47 {
+    compatible = "ti,ina219";
+    reg = <0x47>;
+    shunt-resistor = <5000>;
+    label = "5V0 / USB";
+  };
+
+  5v0-wifi@48 {
+    compatible = "ti,ina219";
+    reg = <0x48>;
+    shunt-resistor = <5000>;
+    label = "5V0 / WiFi";
+  };
+
+  12v0-reg@49 {
+    compatible = "ti,ina219";
+    reg = <0x49>;
+    shunt-resistor = <5000>;
+    label = "12V0 / Boost regulator";
+  };
+
+  12v0-poe@4a {
+    compatible = "ti,ina219";
+    reg = <0x4a>;
+    shunt-resistor = <5000>;
+    label = "12V0 / PoE";
+  };
+
+};
+
+&i2c5 {
+  status = "okay";
+  pinctrl-0 = <&i2c5m2_xfer>;
+
+  fan_controller: fan-controller@2c {
+    compatible = "microchip,emc2305";
+    reg = <0x2c>;
+
+    #address-cells = <1>;
+    #size-cells = <0>;
+    #pwm-cells = <3>;
+
+    fan@0 {
+      reg = <0x0>;
+      pwms = <&fan_controller 26000 0 1>;
+      #cooling-cells = <2>;
+    };
+
+    fan@1 {
+      reg = <0x1>;
+      pwms = <&fan_controller 26000 0 1>;
+      #cooling-cells = <2>;
+    };
+
+    fan@2 {
+      reg = <0x2>;
+      pwms = <&fan_controller 26000 0 1>;
+      #cooling-cells = <2>;
+    };
+
+    fan@3 {
+      reg = <0x3>;
+      pwms = <&fan_controller 26000 0 1>;
+      #cooling-cells = <2>;
+    };
+
+    fan@4 {
+      reg = <0x4>;
+      pwms = <&fan_controller 26000 0 1>;
+      #cooling-cells = <2>;
+    };
+  };
+};
+
+&i2c7 {
+  status = "okay";
+  pinctrl-0 = <&i2c7m0_xfer>;
+
+  mux@70 {
+    compatible = "nxp,pca9548";
+    #address-cells = <1>;
+    #size-cells = <0>;
+    reg = <0x70>;
+
+    i2c@0 {
+      #address-cells = <1>;
+      #size-cells = <0>;
+      reg = <0>;
+
+      sensor@48 {
+        compatible = "ti,tmp102";
+        reg = <0x48>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+
+      sensor@49 {
+        compatible = "ti,tmp102";
+        reg = <0x49>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+    };
+
+    i2c@1 {
+      #address-cells = <1>;
+      #size-cells = <0>;
+      reg = <1>;
+
+      sensor@48 {
+        compatible = "ti,tmp102";
+        reg = <0x48>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+
+      sensor@49 {
+        compatible = "ti,tmp102";
+        reg = <0x49>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+    };
+
+    i2c@2 {
+      #address-cells = <1>;
+      #size-cells = <0>;
+      reg = <2>;
+
+      sensor@48 {
+        compatible = "ti,tmp102";
+        reg = <0x48>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+
+      sensor@49 {
+        compatible = "ti,tmp102";
+        reg = <0x49>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+    };
+
+    i2c@3 {
+      #address-cells = <1>;
+      #size-cells = <0>;
+      reg = <3>;
+
+      sensor@48 {
+        compatible = "ti,tmp102";
+        reg = <0x48>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+
+      sensor@49 {
+        compatible = "ti,tmp102";
+        reg = <0x49>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+    };
+
+    i2c@4 {
+      #address-cells = <1>;
+      #size-cells = <0>;
+      reg = <4>;
+
+      sensor@48 {
+        compatible = "ti,tmp102";
+        reg = <0x48>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+
+      sensor@49 {
+        compatible = "ti,tmp102";
+        reg = <0x49>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+    };
+
+    i2c@5 {
+      #address-cells = <1>;
+      #size-cells = <0>;
+      reg = <5>;
+
+      sensor@48 {
+        compatible = "ti,tmp102";
+        reg = <0x48>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+
+      sensor@49 {
+        compatible = "ti,tmp102";
+        reg = <0x49>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+    };
+
+    i2c@6 {
+      #address-cells = <1>;
+      #size-cells = <0>;
+      reg = <6>;
+
+      sensor@48 {
+        compatible = "ti,tmp102";
+        reg = <0x48>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+
+      sensor@49 {
+        compatible = "ti,tmp102";
+        reg = <0x49>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+    };
+
+    i2c@7 {
+      #address-cells = <1>;
+      #size-cells = <0>;
+      reg = <7>;
+
+      sensor@48 {
+        compatible = "ti,tmp102";
+        reg = <0x48>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+
+      sensor@49 {
+        compatible = "ti,tmp102";
+        reg = <0x49>;
+        
+        #thermal-sensor-cells = <1>;
+      };
+    };
+  };
 };
 
 // M.2 M-Key
@@ -359,6 +677,11 @@
 			rockchip,pins = <3 RK_PD4 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
+	pcie_b {
+		pcie_b_en_pctrl: pcie-b-en {
+			rockchip,pins = <3 RK_PD2 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
 
 	wifi {
 		wifi_en_pctrl: wifi-en {
@@ -421,7 +744,7 @@
 		/* GPIO1_C0-C3 */
 		"", "", "", "M2.B.IO11",
 		/* GPIO1_C4-C7 */
-		"", "M2.B.DEVSLP", "", "M2.B.PWR.EN",
+		"", "M2.B.DEVSLP", "", "M2.B.PWREN",
 
 		/* GPIO1_D0-D3 */
 		"I2C7.M0.SCL", "I2C7.M0.SDA", "I2C1.M4.SCL", "I2C1.M4.SDA",
