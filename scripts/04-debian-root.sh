@@ -10,11 +10,17 @@ then
     # 4. SSH & Grundkonfiguration
     echo "[✨] Configuring base system..."
     cp /opt/output/kernel/rk3588_nx5-carmod_defconfig ${ROOTFS_DIR}/boot/config-${KERNEL_VERSION}
+    cp /opt/output/kernel/linux-headers-6.1.115+_arm64.deb ${ROOTFS_DIR}/tmp/
+    cp /opt/output/kernel/linux-image-6.1.115+_arm64.deb ${ROOTFS_DIR}/tmp/
+    chroot ${ROOTFS_DIR} dpkg -i /tmp/linux-headers-6.1.115+_arm64.deb
+    chroot ${ROOTFS_DIR} dpkg -i /tmp/linux-image-6.1.115+_arm64.deb
+    
 
     # move kernel modules
-    mkdir -p ${ROOTFS_DIR}/lib/modules/${KERNEL_VERSION}
-    cp -a /opt/output/kernel/modules/lib/modules/${KERNEL_VERSION}/* ${ROOTFS_DIR}/lib/modules/${KERNEL_VERSION}/
-    chroot ${ROOTFS_DIR} depmod -a ${KERNEL_VERSION}
+    
+    # mkdir -p ${ROOTFS_DIR}/lib/modules/${KERNEL_VERSION}
+    #cp -a /opt/output/kernel/modules/lib/modules/${KERNEL_VERSION}/* ${ROOTFS_DIR}/lib/modules/${KERNEL_VERSION}/
+    #chroot ${ROOTFS_DIR} depmod -a ${KERNEL_VERSION}
 
     chroot ${ROOTFS_DIR} /bin/bash -c "
     apt update && \

@@ -21,21 +21,6 @@
 	 	fan-supply = <&vcc4v0_sys>;
 	};
 
-	// example: always on io pin on boot!
-	// bluetooth_en: bluetooth-en {
-	// 	compatible = "regulator-fixed";
-	// 	regulator-name = "bluetooth_en";
-	// 	regulator-min-microvolt = <3300000>;
-	// 	regulator-max-microvolt = <3300000>;
-	// 	regulator-boot-on;
-	// 	regulator-always-on;
-	// 	enable-active-low;
-	// 	gpio = <&gpio1 RK_PB0 GPIO_ACTIVE_LOW>;
-	// 	pinctrl-names = "default";
-	// 	pinctrl-0 = <&ble_en>;
-	// 	vin-supply = <&vcc4v0_sys>;
-	// };
-
 	vcc3v3_pcie_m: vcc3v3-pcie-m {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc3v3_pcie_m";
@@ -77,29 +62,6 @@
 		pinctrl-0 = <&pcie_b_en_pctrl>;
 	};
 
-	wifi_en: wifi-en {
-		compatible = "regulator-fixed";
-		regulator-name = "vcc5v0_wifi";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-		startup-delay-us = <60000>;
-		gpio = <&gpio3 RK_PC0 GPIO_ACTIVE_LOW>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&wifi_en_pctrl>;
-	};
-
-	wifi_rst: wifi-rst {
-		compatible = "regulator-fixed";
-		regulator-name = "vcc5v0_wifi";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-		startup-delay-us = <10000>;
-		gpio = <&gpio3 RK_PB7 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-		pinctrl-names = "default";
-		pinctrl-0 = <&wifi_rst_pctrl>;
-	};
-
 	hub_en: hub-en {
 		compatible = "regulator-fixed";
 		regulator-name = "hub_en";
@@ -107,6 +69,20 @@
 		regulator-max-microvolt = <5000000>;
 		startup-delay-us = <10000>;
 		gpio = <&gpio4 RK_PB2 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&hub_en_pctrl>;
+	 	regulator-boot-on;
+		regulator-always-on;
+	};
+
+	m2b_pren: m2b_pren {
+		compatible = "regulator-fixed";
+		regulator-name = "hub_en";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		startup-delay-us = <10000>;
+		gpio = <&gpio1 RK_PC7 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		pinctrl-names = "default";
 		pinctrl-0 = <&hub_en_pctrl>;
@@ -123,6 +99,7 @@
 			linux,default-trigger = "heartbeat";
 		};
 	};
+
 	// Fake ... 
 	vcc5v0_sys: vcc5v0-sys {
     	compatible = "regulator-fixed";

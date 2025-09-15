@@ -8,5 +8,5 @@ services:
       - ./configs:/opt/configs
       - ./scripts:/opt/scripts
       - ./build.sh:/opt/build.sh
-      - ./test:/opt/build
+     # - ./test:/opt/build
     command: ["bash", "/build.sh"]

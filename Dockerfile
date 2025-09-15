@@ -19,6 +19,13 @@ RUN apt-get install -y \
 RUN apt-get install -y \
   bc build-essential crossbuild-essential-arm64 device-tree-compiler git python3 bison flex lzop python3-setuptools \
   swig python3-dev libssl-dev python3-pyelftools uuid-dev gnutls-dev python3-pyelftools python3-setuptools
+
+RUN apt-get install -y \
+  build-essential fakeroot dpkg-dev debhelper cpio lsb-release
+
+RUN apt-get install -y \
+  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
+
 WORKDIR /opt/build
 
 ENTRYPOINT ["/opt/build.sh"]

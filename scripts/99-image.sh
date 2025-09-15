@@ -46,20 +46,18 @@ root_uuid="649161d6-d4d7-4cd1-acb8-453c16b78feb"
 echo "[🗾] Copying rootfs to root partition..."
 rsync -a ${ROOTFS_DIR}/ mnt/root/
 
-    echo "[🗾] Copying initrd.img to boot partition..."
-    cp /opt/output/kernel/initrd.img-${KERNEL_VERSION} mnt/boot/
-    sha256sum mnt/boot/initrd.img.gz-${KERNEL_VERSION}
-    sha256sum /opt/output/kernel/initrd.img.gz-${KERNEL_VERSION}
-    
+    # echo "[🗾] Copying initrd.img to boot partition..."
+    # cp /opt/output/kernel/initrd.img-${KERNEL_VERSION} mnt/boot/
+
+    # echo "[🗾] Copying Image to boot partition..."
+    # cp /opt/output/kernel/Image-$KERNEL_VERSION mnt/boot/
+
     echo "[🗾] Copying uImage to boot partition..."
     cp /opt/output/kernel/uImage-$KERNEL_VERSION mnt/boot/
 
     echo "[🗾] Copying uInitrd to boot partition..."
     cp /opt/output/kernel/uInitrd-$KERNEL_VERSION mnt/boot/
     
-    echo "[🗾] Copying Image to boot partition..."
-    cp /opt/output/kernel/Image-$KERNEL_VERSION mnt/boot/
-
     echo "[🗾] Copying rk3588-radxa-nx5-carmod.dtb to boot partition ..."
     cp /opt/output/kernel/rk3588-radxa-nx5-carmod.dtb mnt/boot/
 
