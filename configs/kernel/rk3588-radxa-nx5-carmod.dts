@@ -726,7 +726,7 @@
 		/* GPIO1_D0-D3 */
 		"I2C7.M0.SCL", "I2C7.M0.SDA", "I2C1.M4.SCL", "I2C1.M4.SDA",
 		/* GPIO1_D4-D7 */
-		"M2.B.DEVSLP", "", "", "";
+		"M2.B.nDIS2", "", "", "";
 };
 
 &gpio2 {
